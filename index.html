@@ -47,8 +47,7 @@
         const response = await fetch(myRequest);
         const buf = await response.arrayBuffer();
         const counter = await getHash(fileName);
-        const decrypted = await decryptMessage(key, buf, counter);
-        return decrypted;
+        return await decryptMessage(key, buf, counter);
     }
 
     const createImg = decrypted => {
