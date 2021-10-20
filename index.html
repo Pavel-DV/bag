@@ -97,7 +97,7 @@
         ];
         const pics = document.getElementById('pics');
         const passHash16 = await getHash(prompt('Password'));
-        const images = await Promise.all(files.map(decryptFile(passHash16)).map(createImg));
+        const images = (await Promise.all(files.map(decryptFile(passHash16)))).map(createImg);
         pics.append(...images);
     })();
 </script>
