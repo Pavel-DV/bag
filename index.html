@@ -48,10 +48,14 @@
         const buf = await response.arrayBuffer();
         const counter = await getHash(fileName);
         const decrypted = await decryptMessage(key, buf, counter);
+        return decrypted;
+    }
+
+    const createImg = decrypted => {
         const img = document.createElement('img');
         img.src = window.URL.createObjectURL(new Blob([ decrypted ], { type: 'image/jpg' }));
         // img.style.maxWidth = '100%';
-        img.style.objectFit = 'contain';
+        img.style.objectFit = 'scale-down';
         return img;
     }
 
@@ -93,7 +97,7 @@
         ];
         const pics = document.getElementById('pics');
         const passHash16 = await getHash(prompt('Password'));
-        const images = await Promise.all(files.map(decryptFile(passHash16)));
+        const images = await Promise.all(files.map(decryptFile(passHash16)).map(createImg));
         pics.append(...images);
     })();
 </script>
