@@ -54,7 +54,7 @@
     const createImg = decrypted => {
         const img = document.createElement('img');
         img.src = window.URL.createObjectURL(new Blob([ decrypted ], { type: 'image/jpg' }));
-        // img.style.maxWidth = '100%';
+        img.style.maxWidth = '100%';
         img.style.objectFit = 'scale-down';
         return img;
     }
