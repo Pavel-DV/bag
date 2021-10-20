@@ -50,7 +50,8 @@
         const decrypted = await decryptMessage(key, buf, counter);
         const img = document.createElement('img');
         img.src = window.URL.createObjectURL(new Blob([ decrypted ], { type: 'image/jpg' }));
-        img.style.maxWidth = '100%';
+        // img.style.maxWidth = '100%';
+        img.style.objectFit = 'contain';
         return img;
     }
 
@@ -69,7 +70,7 @@
             '9qpoKQsaYNE.jpg',
             '20201223_233231.jpg',
             '20201223_234537.jpg',
-            '20201223_234809.jpg',
+            '20201223_234809.jpg',//Косяк
             '20201224_000503.jpg',
             '20201224_000559.jpg',
             '129312451_297055731642057_1903483115975370043_n.jpg',
@@ -86,7 +87,6 @@
             'nXJQrY1QA1o.jpg',
             'PMYH1020.JPG',
             'qSile-UgBKs.jpg',
-            'saeCV89NJ7U.jpg',
             'ULYB6893.JPG',
             'xDhinEEMkYw.jpg',
             'xkpO0q9mdw8.jpg',
