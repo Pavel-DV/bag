@@ -19,19 +19,19 @@
 </head>
 <body>
 <div id="pic" style="height: 100%; width: 100%; display: flex; justify-content: center; align-items: center;">
-    <input type="file" onchange="encodeImageFileAsURL(this)" multiple />
+    <input type="file" onchange="encodeImageFileAsURL(this)" multiple/>
 </div>
 <script>
-    'use strict';
+    'use strict'
 
-    const password = prompt('Password');
+    const password = prompt('Password')
 
     async function encodeImageFileAsURL(element) {
         Array.from(element.files).forEach(file => {
-            const reader = new FileReader();
-            reader.readAsArrayBuffer(file);
+            const reader = new FileReader()
+            reader.readAsArrayBuffer(file)
             reader.onloadend = async function () {
-                const passHash16 = await getHash(password);
+                const passHash16 = await getHash(password)
 
                 const key = await window.crypto.subtle.importKey(
                     'raw',
@@ -39,22 +39,34 @@
                     'AES-CBC',
                     true,
                     [ 'encrypt', 'decrypt' ],
-                );
+                )
 
-                const counter = await getHash(file.name);
+                const counter = await getHash(file.name)
 
-                const ciphertext = await encryptMessage(key, reader.result, counter);
-                const encryptedBlob = new Blob([ ciphertext ], { type: 'application/octet-binary' });
-                // const decrypted = await decryptMessage(key, ciphertext, counter);
-                // const decryptedBlob = new Blob([ decrypted ], { type: 'application/octet-binary' });
+                const ciphertext = await encryptMessage(key, reader.result, counter)
+                const encryptedBlob = new Blob([ ciphertext ], { type: 'application/octet-binary' })
 
-                const a = document.createElement('a');
-                a.href = window.URL.createObjectURL(encryptedBlob);
-                a.download = file.name;
-                document.body.appendChild(a);
-                a.click();
+
+                // const decrypted = await decryptMessage(key, ciphertext, counter)
+                // const decryptedBlob = new Blob([ decrypted ], { type: 'application/octet-binary' })
+
+                const chunkSize = 25 * 1024 * 1024
+                const encryptedChunks = [ ...Array(Math.ceil(encryptedBlob.size / chunkSize)) ].map((_, i) => encryptedBlob.slice(i * chunkSize, (i + 1 ) * chunkSize, encryptedBlob.type))
+
+                // const buf = new Blob(encryptedChunks).arrayBuffer()
+                // const decrypted = await decryptMessage(key, buf, counter)
+                // const decryptedBlob = new Blob([ decrypted ], { type: 'application/octet-binary' })
+
+                encryptedChunks.forEach((chunk, i) => {
+                    const a = document.createElement('a')
+                    a.href = window.URL.createObjectURL(chunk)
+                    a.download = (encryptedChunks.length > 1 ? i + '_' : '') + file.name
+                    document.body.appendChild(a)
+                    a.click()
+
+                })
             }
-        });
+        })
     }
 
     async function encryptMessage(key, encoded, iv) {
@@ -79,13 +91,13 @@
             },
             key,
             ciphertext,
-        );
+        )
     }
 
     async function getHash(text) {
-        const uint8encoded = new TextEncoder().encode(text);
-        const longHash = await crypto.subtle.digest('SHA-1', uint8encoded);
-        return new Uint8Array(longHash, 0, 16);
+        const uint8encoded = new TextEncoder().encode(text)
+        const longHash = await crypto.subtle.digest('SHA-1', uint8encoded)
+        return new Uint8Array(longHash, 0, 16)
     }
 </script>
 </body>

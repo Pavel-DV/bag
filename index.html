@@ -21,7 +21,7 @@
 <div id="pics" style="width: 100%; display: flex; flex-direction: column; ">
 </div>
 <script>
-    'use strict';
+    'use strict'
 
     async function decryptMessage(key, ciphertext, iv) {
         return await window.crypto.subtle.decrypt(
@@ -32,86 +32,398 @@
             },
             key,
             ciphertext,
-        );
+        ).catch(e =>
+            console.log(e)
+        )
     }
 
-    const decryptFile = passHash16 => async fileName => {
-        const myRequest = new Request(`/pics/${fileName}`);
+    const fetchFile = async fileName => {
+        const myRequest = new Request(`/pics/${fileName}`)
+        const response = await fetch(myRequest)
+        return await response.arrayBuffer()
+    }
+
+    const decryptFile = passHash16 => async file => {
+        const buf = await Promise.all(file.chunks.map(fetchFile)).then(bufs => new Blob(bufs).arrayBuffer())
+
         const key = await window.crypto.subtle.importKey(
             'raw',
             passHash16,
             'AES-CBC',
             true,
             [ 'encrypt', 'decrypt' ],
-        );
-        const response = await fetch(myRequest);
-        const buf = await response.arrayBuffer();
-        const counter = await getHash(fileName);
-        return await decryptMessage(key, buf, counter);
+        )
+
+        const counter = await getHash(file.name)
+
+        return { data: await decryptMessage(key, buf, counter), file }
     }
 
     const createImg = decrypted => {
-        const img = document.createElement('img');
-        img.src = window.URL.createObjectURL(new Blob([ decrypted ], { type: 'image/jpg' }));
-        img.style.width = '100%';
-        img.style.objectFit = 'contain';
-        return img;
+        const src = window.URL.createObjectURL(new Blob([ decrypted.data ], { type: decrypted.file.type }))
+
+        const media = decrypted.file.type === 'image/jpg' ? (src => {
+            const img = document.createElement('img')
+            img.src = src
+
+            return img
+        })(src) : (src => {
+            const video = document.createElement('video')
+            const source = document.createElement('source')
+            video.append(source)
+            source.src = src
+
+            return video
+        })(src)
+
+        media.style.width = '100%'
+        media.style.objectFit = 'contain'
+
+        return media
     }
 
     async function getHash(text) {
-        const uint8encoded = new TextEncoder().encode(text);
-        const longHash = await crypto.subtle.digest('SHA-1', uint8encoded);
-        return new Uint8Array(longHash, 0, 16);
+        const uint8encoded = new TextEncoder().encode(text)
+        const longHash = await crypto.subtle.digest('SHA-1', uint8encoded)
+        return new Uint8Array(longHash, 0, 16)
     }
 
     (async () => {
         const files = [
-            'IMG_3028.JPG',    //    Bag 2
-            'IMG_3029.JPG',
-            'IMG_3030.JPG',
-            'IMG_3031.JPG',
-            'IMG_3032.JPG',
-            'IMG_3033.JPG',
-            'IMG_3034.JPG',
-            'IMG_3035.JPG',
-            
-            'IMG_3019.JPG',    //    cr-x
-            'photo_5330532083875040308_y.jpg',
-            'photo_5330532083875040309_y.jpg',
-            'photo_5330532083875040310_y.jpg',
-            '1.jpg',
-            '4A-KFJjJTys.jpg',
-            '4PSg6fGlsfQ.jpg',
-            '8q5gf9asLCU (1).jpg',
-            '9qpoKQsaYNE.jpg',
-            '20201223_233231.jpg',
-            '20201223_234537.jpg',
-            '20201223_234809.jpg',//Косяк
-            '20201224_000503.jpg',
-            '20201224_000559.jpg',
-            '129312451_297055731642057_1903483115975370043_n.jpg',
-            'bgUrn0kdbxA.jpg',
-            'cj8hCz9Eqkk.jpg',
-            'GEJ7beOOtIU.jpg',
-            'GS4xczuw5rg.jpg',
-            'GSizDNPzR0I.jpg',
-            'IySqSgEiDw0.jpg',
-            'KWNE9981.JPG',
-            'leK7lQp0EXE.jpg',
-            'LKdYLmasVBM.jpg',
-            'NpX0Yjz2xS8.jpg',
-            'nXJQrY1QA1o.jpg',
-            'PMYH1020.JPG',
-            'qSile-UgBKs.jpg',
-            'ULYB6893.JPG',
-            'xDhinEEMkYw.jpg',
-            'xkpO0q9mdw8.jpg',
-        ];
-        const pics = document.getElementById('pics');
-        const passHash16 = await getHash(prompt('Password'));
-        const images = (await Promise.all(files.map(decryptFile(passHash16)))).map(createImg);
-        pics.append(...images);
-    })();
+            {
+                'name': 'telegram_video.mp4',
+                'chunks': [
+                    '0_telegram_video.mp4',
+                    '1_telegram_video.mp4',
+                    '2_telegram_video.mp4'
+                ],
+                'type': 'video/webm'
+            },
+            {
+                'name': 'IMG_3028.JPG',
+                'chunks': [
+                    'IMG_3028.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IMG_3029.JPG',
+                'chunks': [
+                    'IMG_3029.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IMG_3030.JPG',
+                'chunks': [
+                    'IMG_3030.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IMG_3031.JPG',
+                'chunks': [
+                    'IMG_3031.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IMG_3032.JPG',
+                'chunks': [
+                    'IMG_3032.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IMG_3033.JPG',
+                'chunks': [
+                    'IMG_3033.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IMG_3034.JPG',
+                'chunks': [
+                    'IMG_3034.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IMG_3035.JPG',
+                'chunks': [
+                    'IMG_3035.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IMG_3019.JPG',
+                'chunks': [
+                    'IMG_3019.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'photo_5330532083875040308_y.jpg',
+                'chunks': [
+                    'photo_5330532083875040308_y.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'photo_5330532083875040309_y.jpg',
+                'chunks': [
+                    'photo_5330532083875040309_y.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'photo_5330532083875040310_y.jpg',
+                'chunks': [
+                    'photo_5330532083875040310_y.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '1.jpg',
+                'chunks': [
+                    '1.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '4A-KFJjJTys.jpg',
+                'chunks': [
+                    '4A-KFJjJTys.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '4PSg6fGlsfQ.jpg',
+                'chunks': [
+                    '4PSg6fGlsfQ.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '8q5gf9asLCU (1).jpg',
+                'chunks': [
+                    '8q5gf9asLCU (1).jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '9qpoKQsaYNE.jpg',
+                'chunks': [
+                    '9qpoKQsaYNE.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '20201223_233231.jpg',
+                'chunks': [
+                    '20201223_233231.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '20201223_234537.jpg',
+                'chunks': [
+                    '20201223_234537.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '20201223_234809.jpg',
+                'chunks': [
+                    '20201223_234809.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '20201224_000503.jpg',
+                'chunks': [
+                    '20201224_000503.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '20201224_000559.jpg',
+                'chunks': [
+                    '20201224_000559.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': '129312451_297055731642057_1903483115975370043_n.jpg',
+                'chunks': [
+                    '129312451_297055731642057_1903483115975370043_n.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'bgUrn0kdbxA.jpg',
+                'chunks': [
+                    'bgUrn0kdbxA.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'cj8hCz9Eqkk.jpg',
+                'chunks': [
+                    'cj8hCz9Eqkk.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'GEJ7beOOtIU.jpg',
+                'chunks': [
+                    'GEJ7beOOtIU.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'GS4xczuw5rg.jpg',
+                'chunks': [
+                    'GS4xczuw5rg.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'GSizDNPzR0I.jpg',
+                'chunks': [
+                    'GSizDNPzR0I.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'IySqSgEiDw0.jpg',
+                'chunks': [
+                    'IySqSgEiDw0.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'KWNE9981.JPG',
+                'chunks': [
+                    'KWNE9981.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'leK7lQp0EXE.jpg',
+                'chunks': [
+                    'leK7lQp0EXE.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'LKdYLmasVBM.jpg',
+                'chunks': [
+                    'LKdYLmasVBM.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'NpX0Yjz2xS8.jpg',
+                'chunks': [
+                    'NpX0Yjz2xS8.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'nXJQrY1QA1o.jpg',
+                'chunks': [
+                    'nXJQrY1QA1o.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'PMYH1020.JPG',
+                'chunks': [
+                    'PMYH1020.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'qSile-UgBKs.jpg',
+                'chunks': [
+                    'qSile-UgBKs.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'ULYB6893.JPG',
+                'chunks': [
+                    'ULYB6893.JPG'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'xDhinEEMkYw.jpg',
+                'chunks': [
+                    'xDhinEEMkYw.jpg'
+                ],
+                'type': 'image/jpg'
+            },
+            {
+                'name': 'xkpO0q9mdw8.jpg',
+                'chunks': [
+                    'xkpO0q9mdw8.jpg'
+                ],
+                'type': 'image/jpg'
+            }
+        ]
+
+
+        /*[
+
+        [ '0_telegram_video.mp4', '1_telegram_video.mp4', '2_telegram_video.mp4' ],
+        'IMG_3028.JPG',    //    Bag 2
+        'IMG_3029.JPG',
+        'IMG_3030.JPG',
+        'IMG_3031.JPG',
+        'IMG_3032.JPG',
+        'IMG_3033.JPG',
+        'IMG_3034.JPG',
+        'IMG_3035.JPG',
+
+        'IMG_3019.JPG',    //    cr-x
+        'photo_5330532083875040308_y.jpg',
+        'photo_5330532083875040309_y.jpg',
+        'photo_5330532083875040310_y.jpg',
+        '1.jpg',
+        '4A-KFJjJTys.jpg',
+        '4PSg6fGlsfQ.jpg',
+        '8q5gf9asLCU (1).jpg',
+        '9qpoKQsaYNE.jpg',
+        '20201223_233231.jpg',
+        '20201223_234537.jpg',
+        '20201223_234809.jpg',//Косяк
+        '20201224_000503.jpg',
+        '20201224_000559.jpg',
+        '129312451_297055731642057_1903483115975370043_n.jpg',
+        'bgUrn0kdbxA.jpg',
+        'cj8hCz9Eqkk.jpg',
+        'GEJ7beOOtIU.jpg',
+        'GS4xczuw5rg.jpg',
+        'GSizDNPzR0I.jpg',
+        'IySqSgEiDw0.jpg',
+        'KWNE9981.JPG',
+        'leK7lQp0EXE.jpg',
+        'LKdYLmasVBM.jpg',
+        'NpX0Yjz2xS8.jpg',
+        'nXJQrY1QA1o.jpg',
+        'PMYH1020.JPG',
+        'qSile-UgBKs.jpg',
+        'ULYB6893.JPG',
+        'xDhinEEMkYw.jpg',
+        'xkpO0q9mdw8.jpg',
+    ]*/
+        const pics = document.getElementById('pics')
+        const passHash16 = await getHash(prompt('Password'))
+        const images = (await Promise.all(files.map(decryptFile(passHash16)))).map(createImg)
+        pics.append(...images)
+    })()
 </script>
 </body>
 </html>
