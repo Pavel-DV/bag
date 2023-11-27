@@ -72,8 +72,10 @@
             video.src = src
 
             video.addEventListener('error', function (err) {
-                alert(video.error.toString())
-                alert(err.toString())
+                alert(video.error.code)
+                alert(video.error.message)
+                alert(err.code)
+                alert(err.message)
             })
 
             return video
