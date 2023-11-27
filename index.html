@@ -69,9 +69,15 @@
             return img
         })(src) : (src => {
             const video = document.createElement('video')
-            const source = document.createElement('source')
-            video.append(source)
-            source.src = src
+            // const source = document.createElement('source')
+            // video.append(source)
+            // source.src = src
+            video.src = src
+
+            video.addEventListener('error', function (err) {
+                console.error(video.error, err)
+                alert('nay :(')
+            })
 
             return video
         })(src)
