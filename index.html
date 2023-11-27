@@ -68,21 +68,18 @@
 
             return img
         })(src) : (src => {
-            const video = document.createElement('video')
-            video.src = src
-            video.controls = true;
-            video.autoplay = true;
-            video.playsinline = true;
-            // video.poster="video_thumbnail/thumbanil.jpg"
-
-            video.addEventListener('error', function (err) {
-                alert(video.error.code)
-                alert(video.error.message)
-                alert(err.code)
-                alert(err.message)
+            return Object.assign(document.createElement('video'), {
+                src,
+                // controls: true,
+                playsinline: true
             })
 
-            return video
+            // const video = document.createElement('video')
+            // video.src = src
+            // video.controls = true;
+            // video.playsinline = true;
+
+            // return video
         })(src)
 
         media.style.width = '100%'
