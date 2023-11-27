@@ -69,14 +69,11 @@
             return img
         })(src) : (src => {
             const video = document.createElement('video')
-            // const source = document.createElement('source')
-            // video.append(source)
-            // source.src = src
             video.src = src
 
             video.addEventListener('error', function (err) {
-                console.error(video.error, err)
-                alert('nay :(')
+                alert(video.error)
+                alert(err)
             })
 
             return video
@@ -103,7 +100,7 @@
                     '1_telegram_video.mp4',
                     '2_telegram_video.mp4'
                 ],
-                'type': 'video/webm'
+                'type': 'video/mp4'
             },
             {
                 'name': 'IMG_3028.JPG',
