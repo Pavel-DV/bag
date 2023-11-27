@@ -59,10 +59,9 @@
         return { data: await decryptMessage(key, buf, counter), file }
     }
 
-    const createImg = decrypted => {
-        const src = window.URL.createObjectURL(new Blob([ decrypted.data ], { type: decrypted.file.type }))
-
+    const createElement = decrypted => {
         const mediaAttrs = {
+            src: window.URL.createObjectURL(new Blob([ decrypted.data ], { type: decrypted.file.type })),
             style: {
                 width: '100%',
                 objectFit: 'contain'
@@ -70,12 +69,10 @@
         }
 
         return decrypted.file.type === 'image/jpg'
-            ? Object.assign(document.createElement('img'), { src, ...mediaAttrs })
+            ? Object.assign(document.createElement('img'), mediaAttrs)
             : Object.assign(document.createElement('video'), {
-                src,
                 controls: true,
-                autoplay: true,
-                // playsinline: true,
+                playsinline: true,
                 ...mediaAttrs,
             })
     }
@@ -419,7 +416,7 @@
     ]*/
         const pics = document.getElementById('pics')
         const passHash16 = await getHash(prompt('Password'))
-        const images = (await Promise.all(files.map(decryptFile(passHash16)))).map(createImg)
+        const images = (await Promise.all(files.map(decryptFile(passHash16)))).map(createElement)
         pics.append(...images)
     })()
 </script>
