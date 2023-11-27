@@ -62,30 +62,22 @@
     const createImg = decrypted => {
         const src = window.URL.createObjectURL(new Blob([ decrypted.data ], { type: decrypted.file.type }))
 
-        const media = decrypted.file.type === 'image/jpg' ? (src => {
-            const img = document.createElement('img')
-            img.src = src
+        const mediaAttrs = {
+            style: {
+                width: '100%',
+                objectFit: 'contain'
+            }
+        }
 
-            return img
-        })(src) : (src => {
-            return Object.assign(document.createElement('video'), {
+        return decrypted.file.type === 'image/jpg'
+            ? Object.assign(document.createElement('img'), { src, ...mediaAttrs })
+            : Object.assign(document.createElement('video'), {
                 src,
-                // controls: true,
-                playsinline: true
+                controls: true,
+                autoplay: true,
+                // playsinline: true,
+                ...mediaAttrs,
             })
-
-            // const video = document.createElement('video')
-            // video.src = src
-            // video.controls = true;
-            // video.playsinline = true;
-
-            // return video
-        })(src)
-
-        media.style.width = '100%'
-        media.style.objectFit = 'contain'
-
-        return media
     }
 
     async function getHash(text) {
