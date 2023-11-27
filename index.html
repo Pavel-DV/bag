@@ -40,6 +40,7 @@
     const fetchFile = async fileName => {
         const myRequest = new Request(`/pics/${fileName}`)
         const response = await fetch(myRequest)
+
         return await response.arrayBuffer()
     }
 
@@ -80,6 +81,7 @@
     async function getHash(text) {
         const uint8encoded = new TextEncoder().encode(text)
         const longHash = await crypto.subtle.digest('SHA-1', uint8encoded)
+
         return new Uint8Array(longHash, 0, 16)
     }
 
@@ -150,7 +152,7 @@
                 ],
                 'type': 'image/jpg'
             },
-            {
+            {   //  cr-x
                 'name': 'IMG_3019.JPG',
                 'chunks': [
                     'IMG_3019.JPG'
@@ -227,7 +229,7 @@
                 ],
                 'type': 'image/jpg'
             },
-            {
+            {   //  Косяк
                 'name': '20201223_234809.jpg',
                 'chunks': [
                     '20201223_234809.jpg'
@@ -369,51 +371,6 @@
             }
         ]
 
-
-        /*[
-
-        [ '0_telegram_video.mp4', '1_telegram_video.mp4', '2_telegram_video.mp4' ],
-        'IMG_3028.JPG',    //    Bag 2
-        'IMG_3029.JPG',
-        'IMG_3030.JPG',
-        'IMG_3031.JPG',
-        'IMG_3032.JPG',
-        'IMG_3033.JPG',
-        'IMG_3034.JPG',
-        'IMG_3035.JPG',
-
-        'IMG_3019.JPG',    //    cr-x
-        'photo_5330532083875040308_y.jpg',
-        'photo_5330532083875040309_y.jpg',
-        'photo_5330532083875040310_y.jpg',
-        '1.jpg',
-        '4A-KFJjJTys.jpg',
-        '4PSg6fGlsfQ.jpg',
-        '8q5gf9asLCU (1).jpg',
-        '9qpoKQsaYNE.jpg',
-        '20201223_233231.jpg',
-        '20201223_234537.jpg',
-        '20201223_234809.jpg',//Косяк
-        '20201224_000503.jpg',
-        '20201224_000559.jpg',
-        '129312451_297055731642057_1903483115975370043_n.jpg',
-        'bgUrn0kdbxA.jpg',
-        'cj8hCz9Eqkk.jpg',
-        'GEJ7beOOtIU.jpg',
-        'GS4xczuw5rg.jpg',
-        'GSizDNPzR0I.jpg',
-        'IySqSgEiDw0.jpg',
-        'KWNE9981.JPG',
-        'leK7lQp0EXE.jpg',
-        'LKdYLmasVBM.jpg',
-        'NpX0Yjz2xS8.jpg',
-        'nXJQrY1QA1o.jpg',
-        'PMYH1020.JPG',
-        'qSile-UgBKs.jpg',
-        'ULYB6893.JPG',
-        'xDhinEEMkYw.jpg',
-        'xkpO0q9mdw8.jpg',
-    ]*/
         const pics = document.getElementById('pics')
         const passHash16 = await getHash(prompt('Password'))
         const images = (await Promise.all(files.map(decryptFile(passHash16)))).map(createElement)
