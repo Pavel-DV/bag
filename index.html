@@ -38,7 +38,7 @@
     }
 
     const fetchFile = async fileName => {
-        const myRequest = new Request(`/pics/${fileName}`)
+        const myRequest = new Request(`./pics/${fileName}`)
         const response = await fetch(myRequest)
 
         return await response.arrayBuffer()
