@@ -79,10 +79,9 @@
 
         const extraAttrs = type === 'video' ? {
             controls: true,
-            playsinline: true,
         } : {}
 
-        const mediaAttrs = {
+        const attrs = {
             loading: 'lazy',
             src: `data:,${file.name}`,
             onerror: mediaOnError(passHash16),
@@ -90,9 +89,13 @@
         }
 
         const newElement = document.createElement(type)
-        Object.assign(newElement, mediaAttrs)
+
+        // Object.keys(attrs).forEach(key => newElement.setAttribute(key, attrs[key]));
+
+        Object.assign(newElement, attrs)
         Object.assign(newElement.style, style)
         newElement.file = file
+        newElement.setAttribute('playsinline', '')  //  for video
 
         return newElement
     }
