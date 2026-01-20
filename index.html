@@ -107,14 +107,135 @@
         return new Uint8Array(longHash, 0, 16)
     }
 
+    const enc = s => new TextEncoder().encode(s);
+    const dec = b => new TextDecoder().decode(b);
+
+    const deriveWrapKey = async prf =>
+        crypto.subtle.deriveKey(
+            {
+                name: "HKDF",
+                hash: "SHA-256",
+                salt: new Uint8Array(16),
+                info: enc("wrap-page-key"),
+            },
+            await crypto.subtle.importKey("raw", prf, "HKDF", false, ["deriveKey"]),
+            { name: "AES-GCM", length: 256 },
+            false,
+            ["encrypt", "decrypt"]
+        );
+
+    const b64 = {
+        e: u8 => btoa(String.fromCharCode(...u8)),
+        d: s => Uint8Array.from(atob(s), c => c.charCodeAt(0)),
+    };
+
+    const PRF_SALT = (() => {
+        const s = localStorage.getItem("prfSalt");
+        if (s) return b64.d(s);
+
+        const v = crypto.getRandomValues(new Uint8Array(32));
+        localStorage.setItem("prfSalt", b64.e(v));
+        return v;
+    })();
+
     (async () => {
+        await ensureCredential();
         const pics = document.getElementById('pics')
-        const passHash16 = await getHash(prompt('Password'))
+        const passHash16 = await getHash(dec(await unwrapKey()))
         const { default: files } = await import('./files.json', { with: { type: "json" } })
 
         const dummyImages = files.map(createDummyElement(passHash16))
         pics.append(...dummyImages)
     })()
+
+    const prfBytesOnce = (() => {
+        const cache = { value: null };
+
+        return async () => {
+            if (cache.value) return cache.value;
+
+            const a = await navigator.credentials.get({
+                publicKey: {
+                    challenge: crypto.getRandomValues(new Uint8Array(32)),
+                    userVerification: "required",
+                    extensions: { prf: { eval: { first: PRF_SALT } } },
+                },
+            });
+
+            const prf = a.getClientExtensionResults().prf?.results?.first;
+            if (!prf) throw new Error("PRF not supported");
+
+            cache.value = prf;
+            return prf;
+        };
+    })();
+
+
+    async function wrapKey(rawBytes) {
+        const key = await deriveWrapKey(await prfBytesOnce());
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const data = await crypto.subtle.encrypt(
+            { name: "AES-GCM", iv },
+            key,
+            rawBytes
+        );
+
+        localStorage.setItem("wrappedKeyIv", b64.e(iv));
+        localStorage.setItem("wrappedKeyData", b64.e(new Uint8Array(data)));
+    }
+
+    async function unwrapKey() {
+        const ivB64 = localStorage.getItem("wrappedKeyIv");
+        const dataB64 = localStorage.getItem("wrappedKeyData");
+
+        // first run: no wrapped key → ask user
+        if (!ivB64 || !dataB64) {
+            const password = prompt("Password");
+            if (!password) throw new Error("No password");
+
+            const raw = enc(password);
+            await wrapKey(raw);
+            return raw;
+        }
+
+        // normal path: WebAuthn unlock
+        const key = await deriveWrapKey(await prfBytesOnce());
+        const iv = b64.d(ivB64);
+        const data = b64.d(dataB64);
+
+        const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+        return new Uint8Array(plain);
+    }
+
+    async function ensureCredential() {
+        if (localStorage.getItem("wrappedKeyData")) return;
+
+        await navigator.credentials.create({
+            publicKey: {
+                challenge: crypto.getRandomValues(new Uint8Array(32)),
+                rp: { name: "Local Protected Media" },
+                user: {
+                    id: crypto.getRandomValues(new Uint8Array(32)),
+                    name: "local",
+                    displayName: "local"
+                },
+                pubKeyCredParams: [
+                    { type: "public-key", alg: -7 },
+                    { type: "public-key", alg: -257 }
+                ],
+                authenticatorSelection: {
+                    authenticatorAttachment: "platform",
+                    userVerification: "required"
+                },
+                extensions: { prf: {} }
+            }
+        });
+    }
+
+
+    // ---- usage ----
+    // const password = dec(await unwrapKey());
+    
 </script>
 </body>
 </html>
