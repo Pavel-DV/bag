@@ -154,13 +154,24 @@
         return async () => {
             if (cache.value) return cache.value;
 
+            const credentialIdB64 = localStorage.getItem("credentialId");
+            const allowCredentials = credentialIdB64
+                ? [{ type: "public-key", id: b64.d(credentialIdB64) }]
+                : undefined;
+
             const a = await navigator.credentials.get({
                 publicKey: {
                     challenge: crypto.getRandomValues(new Uint8Array(32)),
                     userVerification: "required",
+                    ...(allowCredentials ? { allowCredentials } : {}),
                     extensions: { prf: { eval: { first: PRF_SALT } } },
                 },
             });
+
+            // Backfill credential id for existing users.
+            if (!credentialIdB64 && a?.rawId) {
+                localStorage.setItem("credentialId", b64.e(new Uint8Array(a.rawId)));
+            }
 
             const prf = a.getClientExtensionResults().prf?.results?.first;
             if (!prf) throw new Error("PRF not supported");
@@ -203,14 +214,27 @@
         const iv = b64.d(ivB64);
         const data = b64.d(dataB64);
 
-        const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
-        return new Uint8Array(plain);
+        try {
+            const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+            return new Uint8Array(plain);
+        } catch (e) {
+            // Wrapped key is stale/corrupted or bound to a different credential.
+            localStorage.removeItem("wrappedKeyIv");
+            localStorage.removeItem("wrappedKeyData");
+
+            const password = prompt("Password");
+            if (!password) throw e;
+
+            const raw = enc(password);
+            await wrapKey(raw);
+            return raw;
+        }
     }
 
     async function ensureCredential() {
         if (localStorage.getItem("wrappedKeyData")) return;
 
-        await navigator.credentials.create({
+        const created = await navigator.credentials.create({
             publicKey: {
                 challenge: crypto.getRandomValues(new Uint8Array(32)),
                 rp: { name: "Local Protected Media" },
@@ -230,6 +254,12 @@
                 extensions: { prf: {} }
             }
         });
+
+        if (!created || !created.rawId) {
+            throw new Error("Credential creation failed");
+        }
+
+        localStorage.setItem("credentialId", b64.e(new Uint8Array(created.rawId)));
 
         // iOS Safari needs a reload after create
         location.reload();
