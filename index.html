@@ -232,7 +232,7 @@
     }
 
     async function ensureCredential() {
-        if (localStorage.getItem("wrappedKeyData")) return;
+        if (localStorage.getItem("credentialId")) return;
 
         const created = await navigator.credentials.create({
             publicKey: {
