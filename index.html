@@ -139,6 +139,13 @@
     })();
 
     (async () => {
+        if (!document.hasFocus()) {
+            document.body.innerHTML += '<p style="color: red; font-size: 1.5rem">Please focus the window</p>'
+            await new Promise(resolve => {
+                window.addEventListener('focus', resolve, { once: true })
+            })
+        }
+
         await ensureCredential();
         const pics = document.getElementById('pics')
         const passHash16 = await getHash(dec(await unwrapKey()))
